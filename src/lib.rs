@@ -4,11 +4,14 @@ pub struct Token {
 }
 
 pub fn analyze(text: String) -> Vec<Token> {
-    let sw = text.split_whitespace();
-    sw.map(|t| Token {
-        term: t.to_string(),
-    })
-    .collect::<Vec<Token>>()
+    if text.len() == 0 {
+        return vec![];
+    }
+    text.split_whitespace()
+        .map(|t| Token {
+            term: t.to_string(),
+        })
+        .collect::<Vec<Token>>()
 }
 
 #[cfg(test)]
