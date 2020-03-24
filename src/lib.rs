@@ -19,15 +19,15 @@ pub fn analyze(text: String) -> Vec<Token> {
 
 #[derive(Debug)]
 pub struct Index {
-    inverted_index: RefCell<HashMap<String, Vec<u64>>>,
-    max_doc_id: u64,
+    inverted_index: RefCell<HashMap<String, Vec<usize>>>,
+    max_doc_id: usize,
 }
 
 impl Index {
     pub fn new() -> Index {
         Index {
             inverted_index: RefCell::new(HashMap::new()),
-            max_doc_id: 0u64,
+            max_doc_id: 0,
         }
     }
 
