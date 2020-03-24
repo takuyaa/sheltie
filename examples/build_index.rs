@@ -1,3 +1,4 @@
+extern crate rustsearch;
 extern crate serde;
 extern crate serde_json;
 
@@ -18,6 +19,7 @@ fn parse_json(data: &str) -> serde_json::Result<Record> {
 
 fn main() -> Result<(), String> {
     let stdin = std::io::stdin();
+    let mut index = rustsearch::Index::new();
     for line in stdin.lock().lines() {
         let line = line.map_err(|err| format!("Failed to get line from stdin: {}", err))?;
         if line.trim().is_empty() {
@@ -26,6 +28,7 @@ fn main() -> Result<(), String> {
 
         let record = parse_json(&line).map_err(|err| format!("Failed to parse JSON: {}", err))?;
         println!("{}: {}", record.id, record.text);
+        (&mut index).add(record.text);
     }
     Ok(())
 }
