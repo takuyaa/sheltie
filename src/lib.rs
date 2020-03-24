@@ -21,6 +21,9 @@ mod tests {
 
     #[test]
     fn test_analyze() {
+        assert_eq!(analyze("".to_string()), vec![]);
+        assert_eq!(analyze(" ".to_string()), vec![]);
+        assert_eq!(analyze("   ".to_string()), vec![]);
         assert_eq!(
             analyze("aaa bbb cc d".to_string()),
             vec![
