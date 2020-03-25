@@ -28,7 +28,7 @@ fn main() -> Result<(), String> {
 
         let record = parse_json(&line).map_err(|err| format!("Failed to parse JSON: {}", err))?;
         println!("{}: {}", record.id, record.text);
-        (&mut index).add(record.text);
+        (&mut index).add(&record.text);
     }
     Ok(())
 }

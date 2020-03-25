@@ -6,7 +6,7 @@ pub struct Token {
     token: String,
 }
 
-pub fn analyze(text: String) -> Vec<Token> {
+pub fn analyze(text: &String) -> Vec<Token> {
     if text.len() == 0 {
         return vec![];
     }
@@ -18,8 +18,19 @@ pub fn analyze(text: String) -> Vec<Token> {
 }
 
 #[derive(Debug)]
+pub struct PostingsList {
+    data: Vec<usize>,
+}
+
+impl PostingsList {
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+}
+
+#[derive(Debug)]
 pub struct Index {
-    inverted_index: RefCell<HashMap<String, Vec<usize>>>,
+    inverted_index: RefCell<HashMap<String, PostingsList>>,
     max_doc_id: usize,
 }
 
@@ -31,15 +42,15 @@ impl Index {
         }
     }
 
-    pub fn add(&mut self, text: String) {
+    pub fn add(&mut self, text: &String) {
         let doc_id = self.max_doc_id + 1;
-        let tokens = analyze(text);
+        let tokens = analyze(&text);
         for token in tokens {
             let map = self.inverted_index.get_mut();
             if let Some(postings_list) = map.get_mut(&token.token) {
-                postings_list.push(doc_id);
+                postings_list.data.push(doc_id);
             } else {
-                let posting_list = vec![doc_id];
+                let posting_list = PostingsList { data: vec![doc_id] };
                 map.insert(token.token, posting_list);
             }
         }
@@ -57,7 +68,7 @@ mod tests {
     fn test_index() {
         let mut index = Index::new();
         assert_eq!(index.max_doc_id, 0);
-        index.add(String::from("lorem ipsum"));
+        index.add(&String::from("lorem ipsum"));
         assert_eq!(index.max_doc_id, 1);
         let posting_list_of_test = index
             .inverted_index
@@ -75,11 +86,11 @@ mod tests {
 
     #[test]
     fn test_analyze() {
-        assert_eq!(analyze("".to_string()), vec![]);
-        assert_eq!(analyze(" ".to_string()), vec![]);
-        assert_eq!(analyze("   ".to_string()), vec![]);
+        assert_eq!(analyze(&"".to_string()), vec![]);
+        assert_eq!(analyze(&" ".to_string()), vec![]);
+        assert_eq!(analyze(&"   ".to_string()), vec![]);
         assert_eq!(
-            analyze("aaa bbb cc d".to_string()),
+            analyze(&"aaa bbb cc d".to_string()),
             vec![
                 Token {
                     token: String::from("aaa")
