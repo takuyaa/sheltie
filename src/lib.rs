@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
-    term: String,
+    token: String,
 }
 
 pub fn analyze(text: String) -> Vec<Token> {
@@ -12,7 +12,7 @@ pub fn analyze(text: String) -> Vec<Token> {
     }
     text.split_whitespace()
         .map(|t| Token {
-            term: t.to_string(),
+            token: t.to_string(),
         })
         .collect::<Vec<Token>>()
 }
@@ -36,11 +36,11 @@ impl Index {
         let tokens = analyze(text);
         for token in tokens {
             let map = self.inverted_index.get_mut();
-            if let Some(postings_list) = map.get_mut(&token.term) {
+            if let Some(postings_list) = map.get_mut(&token.token) {
                 postings_list.push(doc_id);
             } else {
                 let posting_list = vec![doc_id];
-                map.insert(token.term, posting_list);
+                map.insert(token.token, posting_list);
             }
         }
         self.max_doc_id = doc_id;
@@ -82,16 +82,16 @@ mod tests {
             analyze("aaa bbb cc d".to_string()),
             vec![
                 Token {
-                    term: String::from("aaa")
+                    token: String::from("aaa")
                 },
                 Token {
-                    term: String::from("bbb")
+                    token: String::from("bbb")
                 },
                 Token {
-                    term: String::from("cc")
+                    token: String::from("cc")
                 },
                 Token {
-                    term: String::from("d")
+                    token: String::from("d")
                 },
             ]
         );
