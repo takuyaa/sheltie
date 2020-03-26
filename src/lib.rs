@@ -89,22 +89,29 @@ impl Index {
     pub fn search(&self, text: &String, k: usize) -> Vec<Result> {
         let results = {
             let tokens = &analyze(text);
-            let mut terms = BinaryHeap::with_capacity(tokens.len());
-            let mut results = BinaryHeap::with_capacity(k);
-            // Set the cursors of all postings lists. The cursors points will be
-            // sorted by a binary heap (min-heap).
-            for token in tokens {
-                if let Some(postings_list) = self.inverted_index.get(&token.token) {
-                    let cursor = Cursor::new(postings_list);
-                    if let Some(cursor) = cursor {
-                        terms.push(Reverse(cursor));
+            let mut terms = {
+                let mut terms = BinaryHeap::with_capacity(tokens.len());
+                // Set the cursors of all postings lists. The cursors points will be
+                // sorted by a binary heap (min-heap).
+                for token in tokens {
+                    if let Some(postings_list) = self.inverted_index.get(&token.token) {
+                        let cursor = Cursor::new(postings_list);
+                        if let Some(cursor) = cursor {
+                            terms.push(Reverse(cursor));
+                        }
                     }
                 }
-            }
-            while let Some(Reverse(cursor_min)) = terms.pop() {
+                terms
+            };
+            let mut results = BinaryHeap::with_capacity(k);
+            while let Some(Reverse(mut cursor_min)) = terms.pop() {
+                // doc_id is a document ID which is now processing.
                 if let Some(doc_id) = cursor_min.next_doc {
-                    // doc_id is a document ID which is now processing.
+                    // process first document.
                     let mut score = 1.0f64; // cumulative score of the document, fixed score for now.
+                    if cursor_min.next() {
+                        terms.push(Reverse(cursor_min));
+                    }
                     while let Some(Reverse(cursor)) = terms.peek() {
                         if cursor.next_doc != Some(doc_id) {
                             break;
@@ -170,6 +177,7 @@ impl PartialEq for ScoredDoc<'_> {
 
 impl Eq for ScoredDoc<'_> {}
 
+#[derive(Debug)]
 struct Cursor<'a> {
     postings_list: &'a PostingsList,
     position: usize, // index position for the postings list
@@ -231,37 +239,49 @@ mod tests {
             assert_eq!(index.max_doc_id, 0);
             index.add(&String::from("two one two"));
             assert_eq!(index.max_doc_id, 1);
+            index.add(&String::from("one two three two three three"));
+            assert_eq!(index.max_doc_id, 2);
             index
         };
 
         let posting_list_one = index.inverted_index.get(&"one".to_string()).unwrap();
-        assert_eq!(posting_list_one.len(), 1);
+        assert_eq!(posting_list_one.len(), 2);
 
         let posting_list_of_two = index.inverted_index.get(&"two".to_string()).unwrap();
-        assert_eq!(posting_list_of_two.len(), 1);
+        assert_eq!(posting_list_of_two.len(), 2);
+
+        let posting_list_of_three = index.inverted_index.get(&"three".to_string()).unwrap();
+        assert_eq!(posting_list_of_three.len(), 1);
     }
 
     #[test]
-    fn test_index_search_single_doc() {
+    fn test_index_search() {
         let index = {
             let mut index = Index::new();
             assert_eq!(index.max_doc_id, 0);
             index.add(&String::from("two one two"));
             assert_eq!(index.max_doc_id, 1);
+            index.add(&String::from("one two three two three three"));
+            assert_eq!(index.max_doc_id, 2);
             index
         };
 
         let posting_list_one = index.inverted_index.get(&"one".to_string()).unwrap();
-        assert_eq!(posting_list_one.len(), 1);
+        assert_eq!(posting_list_one.len(), 2);
 
         let posting_list_of_two = index.inverted_index.get(&"two".to_string()).unwrap();
-        assert_eq!(posting_list_of_two.len(), 1);
+        assert_eq!(posting_list_of_two.len(), 2);
+
+        let posting_list_of_three = index.inverted_index.get(&"three".to_string()).unwrap();
+        assert_eq!(posting_list_of_three.len(), 1);
 
         let results = index.search(&"one".to_string(), 10);
-        assert_eq!(results.len(), 1);
+        assert_eq!(results.len(), 2);
         let results = index.search(&"two".to_string(), 10);
-        assert_eq!(results.len(), 1);
+        assert_eq!(results.len(), 2);
         let results = index.search(&"one two".to_string(), 10);
+        assert_eq!(results.len(), 2);
+        let results = index.search(&"three".to_string(), 10);
         assert_eq!(results.len(), 1);
     }
 
