@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -50,14 +49,14 @@ impl PostingsList {
 
 #[derive(Debug)]
 pub struct Index {
-    inverted_index: RefCell<HashMap<String, PostingsList>>,
+    inverted_index: HashMap<String, PostingsList>,
     max_doc_id: usize,
 }
 
 impl Index {
     pub fn new() -> Self {
         Index {
-            inverted_index: RefCell::new(HashMap::new()),
+            inverted_index: HashMap::new(),
             max_doc_id: 0,
         }
     }
@@ -74,14 +73,13 @@ impl Index {
         };
 
         let doc_id = self.max_doc_id + 1;
-        let inverted_index = self.inverted_index.get_mut();
         for (token, freq) in &freq_map {
-            if let Some(postings_list) = inverted_index.get_mut(token) {
+            if let Some(postings_list) = self.inverted_index.get_mut(token) {
                 postings_list.add(doc_id, *freq);
             } else {
                 let mut posting_list = PostingsList::new();
                 posting_list.add(doc_id, *freq);
-                inverted_index.insert(token.clone(), posting_list);
+                self.inverted_index.insert(token.clone(), posting_list);
             }
         }
         self.max_doc_id = doc_id;
@@ -89,7 +87,6 @@ impl Index {
 
     // Search inverted index by document-at-a-time manner using binary heaps
     pub fn search(&self, text: &String, k: usize) -> Vec<Result> {
-        let inverted_index = self.inverted_index.borrow();
         let results = {
             let tokens = &analyze(text);
             let mut terms = BinaryHeap::with_capacity(tokens.len());
@@ -97,7 +94,7 @@ impl Index {
             // Set the cursors of all postings lists. The cursors points will be
             // sorted by a binary heap (min-heap).
             for token in tokens {
-                if let Some(postings_list) = inverted_index.get(&token.token) {
+                if let Some(postings_list) = self.inverted_index.get(&token.token) {
                     let cursor = Cursor::new(postings_list);
                     if let Some(cursor) = cursor {
                         terms.push(Reverse(cursor));
@@ -237,12 +234,10 @@ mod tests {
             index
         };
 
-        let inverted_index = index.inverted_index.borrow();
-
-        let posting_list_one = inverted_index.get(&"one".to_string()).unwrap();
+        let posting_list_one = index.inverted_index.get(&"one".to_string()).unwrap();
         assert_eq!(posting_list_one.len(), 1);
 
-        let posting_list_of_two = inverted_index.get(&"two".to_string()).unwrap();
+        let posting_list_of_two = index.inverted_index.get(&"two".to_string()).unwrap();
         assert_eq!(posting_list_of_two.len(), 1);
     }
 
@@ -256,12 +251,10 @@ mod tests {
             index
         };
 
-        let inverted_index = index.inverted_index.borrow();
-
-        let posting_list_one = inverted_index.get(&"one".to_string()).unwrap();
+        let posting_list_one = index.inverted_index.get(&"one".to_string()).unwrap();
         assert_eq!(posting_list_one.len(), 1);
 
-        let posting_list_of_two = inverted_index.get(&"two".to_string()).unwrap();
+        let posting_list_of_two = index.inverted_index.get(&"two".to_string()).unwrap();
         assert_eq!(posting_list_of_two.len(), 1);
 
         let results = index.search(&"one".to_string(), 10);
