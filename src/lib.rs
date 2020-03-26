@@ -1,4 +1,7 @@
 use std::cell::RefCell;
+use std::cmp::Ordering;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -39,6 +42,10 @@ impl PostingsList {
         self.docs.push(doc_id);
         self.freqs.push(freq);
     }
+
+    pub fn get_doc_id(&self, index: usize) -> Option<&usize> {
+        self.docs.get(index)
+    }
 }
 
 #[derive(Debug)]
@@ -48,7 +55,7 @@ pub struct Index {
 }
 
 impl Index {
-    pub fn new() -> Index {
+    pub fn new() -> Self {
         Index {
             inverted_index: RefCell::new(HashMap::new()),
             max_doc_id: 0,
@@ -79,7 +86,140 @@ impl Index {
         }
         self.max_doc_id = doc_id;
     }
+
+    // Search inverted index by document-at-a-time manner using binary heaps
+    pub fn search(&self, text: &String, k: usize) -> Vec<Result> {
+        let inverted_index = self.inverted_index.borrow();
+        let results = {
+            let tokens = &analyze(text);
+            let mut terms = BinaryHeap::with_capacity(tokens.len());
+            let mut results = BinaryHeap::with_capacity(k);
+            // Set the cursors of all postings lists. The cursors points will be
+            // sorted by a binary heap (min-heap).
+            for token in tokens {
+                if let Some(postings_list) = inverted_index.get(&token.token) {
+                    let cursor = Cursor::new(postings_list);
+                    if let Some(cursor) = cursor {
+                        terms.push(Reverse(cursor));
+                    }
+                }
+            }
+            while let Some(Reverse(cursor_min)) = terms.pop() {
+                if let Some(doc_id) = cursor_min.next_doc {
+                    // doc_id is a document ID which is now processing.
+                    let mut score = 1.0f64; // cumulative score of the document, fixed score for now.
+                    while let Some(Reverse(cursor)) = terms.peek() {
+                        if cursor.next_doc != Some(doc_id) {
+                            break;
+                        }
+                        if let Some(Reverse(mut cursor)) = terms.pop() {
+                            if let Some(_) = cursor.next_doc {
+                                score += 1.0f64; // fixed score for now.
+                                if cursor.next() {
+                                    terms.push(Reverse(cursor));
+                                }
+                            }
+                        }
+                    }
+                    results.push(ScoredDoc {
+                        doc_id: doc_id,
+                        score: score,
+                    });
+                }
+            }
+            results
+        };
+        results
+            .iter()
+            .take(k)
+            .map(|r| Result {
+                doc_id: *r.doc_id,
+                score: r.score,
+            })
+            .collect()
+    }
 }
+
+#[derive(Debug)]
+pub struct Result {
+    doc_id: usize,
+    score: f64,
+}
+
+struct ScoredDoc<'a> {
+    doc_id: &'a usize,
+    score: f64,
+}
+
+impl Ord for ScoredDoc<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.score
+            .partial_cmp(&other.score)
+            .unwrap_or(Ordering::Less) // should fail?
+    }
+}
+
+impl PartialOrd for ScoredDoc<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.score.partial_cmp(&other.score)
+    }
+}
+
+impl PartialEq for ScoredDoc<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.score == other.score
+    }
+}
+
+impl Eq for ScoredDoc<'_> {}
+
+struct Cursor<'a> {
+    postings_list: &'a PostingsList,
+    position: usize, // index position for the postings list
+    next_doc: Option<&'a usize>,
+}
+
+impl<'a> Cursor<'a> {
+    pub fn new(postings_list: &'a PostingsList) -> Option<Self> {
+        let head = 0;
+        postings_list.get_doc_id(head).map(|doc_id| Cursor {
+            postings_list: postings_list,
+            position: 0,
+            next_doc: Some(doc_id),
+        })
+    }
+
+    pub fn next(&mut self) -> bool {
+        let next_doc = self.postings_list.get_doc_id(self.position + 1);
+        if let Some(next_doc) = next_doc {
+            self.position += 1;
+            self.next_doc = Some(next_doc);
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl Ord for Cursor<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.next_doc.cmp(&other.next_doc)
+    }
+}
+
+impl PartialOrd for Cursor<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.next_doc.cmp(&other.next_doc))
+    }
+}
+
+impl PartialEq for Cursor<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.next_doc == other.next_doc
+    }
+}
+
+impl Eq for Cursor<'_> {}
 
 #[cfg(test)]
 mod tests {
@@ -93,9 +233,10 @@ mod tests {
             let mut index = Index::new();
             assert_eq!(index.max_doc_id, 0);
             index.add(&String::from("two one two"));
+            assert_eq!(index.max_doc_id, 1);
             index
         };
-        assert_eq!(index.max_doc_id, 1);
+
         let inverted_index = index.inverted_index.borrow();
 
         let posting_list_one = inverted_index.get(&"one".to_string()).unwrap();
@@ -103,6 +244,32 @@ mod tests {
 
         let posting_list_of_two = inverted_index.get(&"two".to_string()).unwrap();
         assert_eq!(posting_list_of_two.len(), 1);
+    }
+
+    #[test]
+    fn test_index_search_single_doc() {
+        let index = {
+            let mut index = Index::new();
+            assert_eq!(index.max_doc_id, 0);
+            index.add(&String::from("two one two"));
+            assert_eq!(index.max_doc_id, 1);
+            index
+        };
+
+        let inverted_index = index.inverted_index.borrow();
+
+        let posting_list_one = inverted_index.get(&"one".to_string()).unwrap();
+        assert_eq!(posting_list_one.len(), 1);
+
+        let posting_list_of_two = inverted_index.get(&"two".to_string()).unwrap();
+        assert_eq!(posting_list_of_two.len(), 1);
+
+        let results = index.search(&"one".to_string(), 10);
+        assert_eq!(results.len(), 1);
+        let results = index.search(&"two".to_string(), 10);
+        assert_eq!(results.len(), 1);
+        let results = index.search(&"one two".to_string(), 10);
+        assert_eq!(results.len(), 1);
     }
 
     #[test]
