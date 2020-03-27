@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -19,7 +20,7 @@ pub fn analyze(text: &String) -> Vec<Token> {
         .collect::<Vec<Token>>()
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PostingsList {
     docs: Vec<usize>,
     freqs: Vec<u32>,
@@ -47,7 +48,7 @@ impl PostingsList {
     }
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Index {
     inverted_index: HashMap<String, PostingsList>,
     max_doc_id: usize,

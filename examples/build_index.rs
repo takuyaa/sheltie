@@ -1,10 +1,9 @@
-extern crate rustsearch;
-extern crate serde;
-extern crate serde_json;
-
+use bincode;
+use rustsearch;
 use serde::{Deserialize, Serialize};
-use std::io::BufRead;
-use Result;
+use serde_json;
+use std::fs::File;
+use std::io::{BufRead, Write};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {
@@ -17,7 +16,7 @@ fn parse_json(data: &str) -> serde_json::Result<Record> {
     Ok(record)
 }
 
-fn main() -> Result<(), String> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdin = std::io::stdin();
     let mut index = rustsearch::Index::new();
     for line in stdin.lock().lines() {
@@ -25,10 +24,14 @@ fn main() -> Result<(), String> {
         if line.trim().is_empty() {
             continue;
         }
-
         let record = parse_json(&line).map_err(|err| format!("Failed to parse JSON: {}", err))?;
-        println!("{}: {}", record.id, record.text);
-        (&mut index).add(&record.text);
+        index.add(&record.text);
     }
+    // Write out the index.
+    let encoded: Vec<u8> = bincode::serialize(&index).unwrap();
+    let mut file = File::create("segment.doc")?;
+    file.write_all(&encoded)?;
+    file.flush()?;
+
     Ok(())
 }
