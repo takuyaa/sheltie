@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::prelude::*;
 
 use rustsearch::index::Index;
-use rustsearch::index::Searcher;
+use rustsearch::searcher::Searcher;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {
