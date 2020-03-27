@@ -71,6 +71,17 @@ impl Index {
         }
         self.max_doc_id = doc_id;
     }
+}
+
+pub struct Searcher<'a> {
+    index: &'a Index,
+}
+
+impl<'a> Searcher<'a> {
+    pub fn new(index: &'a Index) -> Searcher {
+        let searcher = Self { index: &index };
+        searcher
+    }
 
     // Search inverted index by document-at-a-time manner using binary heaps
     pub fn search(&self, text: &String, k: usize) -> Vec<Result> {
@@ -81,7 +92,7 @@ impl Index {
                 // Set the cursors of all postings lists. The cursors points will be
                 // sorted by a binary heap (min-heap).
                 for token in tokens {
-                    if let Some(postings_list) = self.inverted_index.get(&token.token) {
+                    if let Some(postings_list) = self.index.inverted_index.get(&token.token) {
                         let cursor = Cursor::new(postings_list);
                         if let Some(cursor) = cursor {
                             terms.push(Reverse(cursor));
@@ -239,8 +250,10 @@ mod tests {
         assert_eq!(posting_list_of_three.len(), 1);
     }
 
+    use super::Searcher;
+
     #[test]
-    fn test_index_search() {
+    fn test_search() {
         let index = {
             let mut index = Index::new();
             assert_eq!(index.max_doc_id, 0);
@@ -260,13 +273,15 @@ mod tests {
         let posting_list_of_three = index.inverted_index.get(&"three".to_string()).unwrap();
         assert_eq!(posting_list_of_three.len(), 1);
 
-        let results = index.search(&"one".to_string(), 10);
+        let searcher = Searcher { index: &index };
+
+        let results = searcher.search(&"one".to_string(), 10);
         assert_eq!(results.len(), 2);
-        let results = index.search(&"two".to_string(), 10);
+        let results = searcher.search(&"two".to_string(), 10);
         assert_eq!(results.len(), 2);
-        let results = index.search(&"one two".to_string(), 10);
+        let results = searcher.search(&"one two".to_string(), 10);
         assert_eq!(results.len(), 2);
-        let results = index.search(&"three".to_string(), 10);
+        let results = searcher.search(&"three".to_string(), 10);
         assert_eq!(results.len(), 1);
     }
 }

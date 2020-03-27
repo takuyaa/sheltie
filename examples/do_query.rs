@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::prelude::*;
 
 use rustsearch::index::Index;
+use rustsearch::index::Searcher;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {
@@ -22,6 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
     let index: Index = bincode::deserialize(&buffer[..]).unwrap();
+    let searcher = Searcher::new(&index);
 
     let stdin = std::io::stdin();
     for line in stdin.lock().lines() {
@@ -33,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{:?}", query.query);
 
         // Only support TOP_10
-        let res = index.search(&query.query, 10);
+        let res = searcher.search(&query.query, 10);
         println!("{:?}", res.len());
     }
 
