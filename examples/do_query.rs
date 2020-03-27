@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::prelude::*;
 
+use rustsearch::index::Index;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {
     query: String,
@@ -19,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut file = File::open("segment.doc")?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
-    let index: rustsearch::Index = bincode::deserialize(&buffer[..]).unwrap();
+    let index: Index = bincode::deserialize(&buffer[..]).unwrap();
 
     let stdin = std::io::stdin();
     for line in stdin.lock().lines() {

@@ -1,9 +1,10 @@
 use bincode;
-use rustsearch;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;
 use std::io::{BufRead, Write};
+
+use rustsearch::index::Index;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {
@@ -18,7 +19,7 @@ fn parse_json(data: &str) -> serde_json::Result<Record> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdin = std::io::stdin();
-    let mut index = rustsearch::Index::new();
+    let mut index = Index::new();
     for line in stdin.lock().lines() {
         let line = line.map_err(|err| format!("Failed to get line from stdin: {}", err))?;
         if line.trim().is_empty() {
