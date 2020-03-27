@@ -4,21 +4,8 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Token {
-    token: String,
-}
-
-pub fn analyze(text: &String) -> Vec<Token> {
-    if text.len() == 0 {
-        return vec![];
-    }
-    text.split_whitespace()
-        .map(|t| Token {
-            token: t.to_string(),
-        })
-        .collect::<Vec<Token>>()
-}
+pub mod analyzer;
+use analyzer::analyze;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PostingsList {
@@ -229,9 +216,7 @@ impl Eq for Cursor<'_> {}
 
 #[cfg(test)]
 mod tests {
-    use super::analyze;
     use super::Index;
-    use super::Token;
 
     #[test]
     fn test_index() {
@@ -284,29 +269,5 @@ mod tests {
         assert_eq!(results.len(), 2);
         let results = index.search(&"three".to_string(), 10);
         assert_eq!(results.len(), 1);
-    }
-
-    #[test]
-    fn test_analyze() {
-        assert_eq!(analyze(&"".to_string()), vec![]);
-        assert_eq!(analyze(&" ".to_string()), vec![]);
-        assert_eq!(analyze(&"   ".to_string()), vec![]);
-        assert_eq!(
-            analyze(&"aaa bbb cc d".to_string()),
-            vec![
-                Token {
-                    token: String::from("aaa")
-                },
-                Token {
-                    token: String::from("bbb")
-                },
-                Token {
-                    token: String::from("cc")
-                },
-                Token {
-                    token: String::from("d")
-                },
-            ]
-        );
     }
 }
