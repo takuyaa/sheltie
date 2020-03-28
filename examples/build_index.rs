@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::env;
 use std::io::BufRead;
 use std::path::Path;
 
@@ -17,8 +18,19 @@ fn parse_json(data: &str) -> serde_json::Result<Record> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args: Vec<String> = env::args().collect();
+    let index_dir_path = match args.len() {
+        1 => panic!(
+            "Usage: cargo run --example build_index examples/data < examples/data/corpus.json"
+        ),
+        2 => &args[1],
+        _ => panic!(
+            "Usage: cargo run --example build_index examples/data < examples/data/corpus.json"
+        ),
+    };
+
     // Open the IndexWriter.
-    let mut writer = IndexWriter::new(Path::new("examples/data"));
+    let mut writer = IndexWriter::new(Path::new(index_dir_path));
 
     // Read documents from stding and index it.
     let stdin = std::io::stdin();
