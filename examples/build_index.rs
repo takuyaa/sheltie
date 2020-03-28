@@ -1,10 +1,11 @@
-use serde::{Deserialize, Serialize};
-use serde_json;
 use std::env;
 use std::io::BufRead;
 use std::path::Path;
 
-use rustsearch::index::IndexWriter;
+use serde::{Deserialize, Serialize};
+use serde_json;
+
+use sheltie::index::IndexWriter;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {

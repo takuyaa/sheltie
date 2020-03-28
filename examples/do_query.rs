@@ -1,11 +1,11 @@
-use rustsearch;
-use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 
-use rustsearch::index::Index;
-use rustsearch::searcher::Searcher;
+use serde::{Deserialize, Serialize};
+
+use sheltie::index::Index;
+use sheltie::searcher::Searcher;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {
