@@ -10,9 +10,8 @@ pub struct Searcher<'a> {
 }
 
 impl<'a> Searcher<'a> {
-    pub fn new(index: &'a Index) -> Searcher {
-        let searcher = Self { index: &index };
-        searcher
+    pub fn new(index: &'a Index) -> Self {
+        Self { index: &index }
     }
 
     // Search inverted index by document-at-a-time manner using binary heaps

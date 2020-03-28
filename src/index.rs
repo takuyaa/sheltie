@@ -10,7 +10,7 @@ pub struct PostingsList {
 }
 
 impl PostingsList {
-    pub fn new() -> PostingsList {
+    pub fn new() -> Self {
         PostingsList {
             docs: vec![],
             freqs: vec![],
