@@ -1,5 +1,11 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::path::Path;
+
+use bincode;
+use serde::{Deserialize, Serialize};
 
 use crate::analyzer::analyze;
 
@@ -43,6 +49,32 @@ impl Index {
 
     pub fn get_postings_list(&self, term: &String) -> Option<&PostingsList> {
         self.inverted_index.get(term)
+    }
+}
+
+pub struct IndexWriter<'a> {
+    index: Index,
+    directory_path: &'a Path,
+}
+
+impl<'a> IndexWriter<'a> {
+    pub fn new(path: &'a Path) -> Self {
+        IndexWriter {
+            index: Index::new(),
+            directory_path: path,
+        }
+    }
+
+    pub fn add(&mut self, text: &String) {
+        self.index.add(text);
+    }
+
+    pub fn export_index(&self) -> io::Result<()> {
+        let encoded: Vec<u8> = bincode::serialize(&self.index).unwrap();
+        let mut file = File::create(self.directory_path.join("segment.doc"))?;
+        file.write_all(&encoded)?;
+        file.flush()?;
+        Ok(())
     }
 }
 

@@ -1,10 +1,9 @@
-use bincode;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::fs::File;
-use std::io::{BufRead, Write};
+use std::io::BufRead;
+use std::path::Path;
 
-use rustsearch::index::Index;
+use rustsearch::index::IndexWriter;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Record {
@@ -18,21 +17,22 @@ fn parse_json(data: &str) -> serde_json::Result<Record> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Open the IndexWriter.
+    let mut writer = IndexWriter::new(Path::new("examples/data"));
+
+    // Read documents from stding and index it.
     let stdin = std::io::stdin();
-    let mut index = Index::new();
     for line in stdin.lock().lines() {
         let line = line.map_err(|err| format!("Failed to get line from stdin: {}", err))?;
         if line.trim().is_empty() {
             continue;
         }
         let record = parse_json(&line).map_err(|err| format!("Failed to parse JSON: {}", err))?;
-        index.add(&record.text);
+        writer.add(&record.text);
     }
+
     // Write out the index.
-    let encoded: Vec<u8> = bincode::serialize(&index).unwrap();
-    let mut file = File::create("segment.doc")?;
-    file.write_all(&encoded)?;
-    file.flush()?;
+    writer.export_index()?;
 
     Ok(())
 }
