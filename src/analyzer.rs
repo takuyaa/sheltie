@@ -1,8 +1,3 @@
-#[derive(Debug, PartialEq, Clone)]
-pub struct Token {
-    pub token: String,
-}
-
 pub fn analyze(text: &String) -> Vec<Token> {
     if text.len() == 0 {
         return vec![];
@@ -12,6 +7,11 @@ pub fn analyze(text: &String) -> Vec<Token> {
             token: t.to_string(),
         })
         .collect::<Vec<Token>>()
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Token {
+    pub token: String,
 }
 
 #[cfg(test)]

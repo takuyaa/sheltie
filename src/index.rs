@@ -4,34 +4,6 @@ use std::collections::HashMap;
 use crate::analyzer::analyze;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PostingsList {
-    docs: Vec<usize>,
-    freqs: Vec<u32>,
-}
-
-impl PostingsList {
-    pub fn new() -> Self {
-        PostingsList {
-            docs: vec![],
-            freqs: vec![],
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        self.docs.len()
-    }
-
-    pub fn add(&mut self, doc_id: usize, freq: u32) {
-        self.docs.push(doc_id);
-        self.freqs.push(freq);
-    }
-
-    pub fn get_doc_id(&self, index: usize) -> Option<&usize> {
-        self.docs.get(index)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct Index {
     inverted_index: HashMap<String, PostingsList>,
     max_doc_id: usize,
@@ -71,6 +43,34 @@ impl Index {
 
     pub fn get_postings_list(&self, term: &String) -> Option<&PostingsList> {
         self.inverted_index.get(term)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PostingsList {
+    docs: Vec<usize>,
+    freqs: Vec<u32>,
+}
+
+impl PostingsList {
+    pub fn new() -> Self {
+        PostingsList {
+            docs: vec![],
+            freqs: vec![],
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.docs.len()
+    }
+
+    pub fn add(&mut self, doc_id: usize, freq: u32) {
+        self.docs.push(doc_id);
+        self.freqs.push(freq);
+    }
+
+    pub fn get_doc_id(&self, index: usize) -> Option<&usize> {
+        self.docs.get(index)
     }
 }
 
