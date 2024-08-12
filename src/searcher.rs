@@ -74,6 +74,7 @@ impl<'a> Searcher<'a> {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct SearchResult {
     doc_id: usize,
     score: f64,
