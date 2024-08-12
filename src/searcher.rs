@@ -15,7 +15,7 @@ impl<'a> Searcher<'a> {
     }
 
     // Search inverted index by document-at-a-time manner using binary heaps
-    pub fn search(&self, text: &String, k: usize) -> Vec<Result> {
+    pub fn search(&self, text: &String, k: usize) -> Vec<SearchResult> {
         let results = {
             let tokens = &analyze(text);
             let mut terms = {
@@ -65,7 +65,7 @@ impl<'a> Searcher<'a> {
         results
             .iter()
             .take(k)
-            .map(|r| Result {
+            .map(|r| SearchResult {
                 doc_id: *r.doc_id,
                 score: r.score,
             })
@@ -74,7 +74,7 @@ impl<'a> Searcher<'a> {
 }
 
 #[derive(Debug)]
-pub struct Result {
+pub struct SearchResult {
     doc_id: usize,
     score: f64,
 }
