@@ -66,7 +66,7 @@ impl<'a> Searcher<'a> {
             .iter()
             .take(k)
             .map(|r| SearchResult {
-                doc_id: *r.doc_id,
+                doc_id: r.doc_id,
                 score: r.score,
             })
             .collect()
@@ -76,16 +76,16 @@ impl<'a> Searcher<'a> {
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct SearchResult {
-    doc_id: usize,
-    score: f64,
+    pub doc_id: usize,
+    pub score: f64,
 }
 
-struct ScoredDoc<'a> {
-    doc_id: &'a usize,
-    score: f64,
+pub struct ScoredDoc {
+    pub doc_id: usize,
+    pub score: f64,
 }
 
-impl Ord for ScoredDoc<'_> {
+impl Ord for ScoredDoc {
     fn cmp(&self, other: &Self) -> Ordering {
         self.score
             .partial_cmp(&other.score)
@@ -93,32 +93,32 @@ impl Ord for ScoredDoc<'_> {
     }
 }
 
-impl PartialOrd for ScoredDoc<'_> {
+impl PartialOrd for ScoredDoc {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.score.partial_cmp(&other.score)
     }
 }
 
-impl PartialEq for ScoredDoc<'_> {
+impl PartialEq for ScoredDoc {
     fn eq(&self, other: &Self) -> bool {
         self.score == other.score
     }
 }
 
-impl Eq for ScoredDoc<'_> {}
+impl Eq for ScoredDoc {}
 
 #[derive(Debug)]
-struct Cursor<'a> {
-    postings_list: &'a PostingsList,
-    position: usize, // index position for the postings list
-    next_doc: Option<&'a usize>,
+pub struct Cursor<'a> {
+    pub postings_list: &'a PostingsList,
+    pub position: usize, // index position for the postings list
+    pub next_doc: Option<usize>,
 }
 
 impl<'a> Cursor<'a> {
     pub fn new(postings_list: &'a PostingsList) -> Option<Self> {
         let head = 0;
         postings_list.get_doc_id(head).map(|doc_id| Cursor {
-            postings_list: postings_list,
+            postings_list,
             position: 0,
             next_doc: Some(doc_id),
         })
@@ -131,6 +131,7 @@ impl<'a> Cursor<'a> {
             self.next_doc = Some(next_doc);
             true
         } else {
+            self.next_doc = None;
             false
         }
     }
