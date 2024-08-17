@@ -66,7 +66,7 @@ impl<'a> Searcher<'a> {
             .iter()
             .take(k)
             .map(|r| SearchResult {
-                doc_id: *r.doc_id,
+                doc_id: r.doc_id,
                 score: r.score,
             })
             .collect()
@@ -80,12 +80,12 @@ pub struct SearchResult {
     pub score: f64,
 }
 
-pub struct ScoredDoc<'a> {
-    pub doc_id: &'a usize,
+pub struct ScoredDoc {
+    pub doc_id: usize,
     pub score: f64,
 }
 
-impl Ord for ScoredDoc<'_> {
+impl Ord for ScoredDoc {
     fn cmp(&self, other: &Self) -> Ordering {
         self.score
             .partial_cmp(&other.score)
@@ -93,25 +93,25 @@ impl Ord for ScoredDoc<'_> {
     }
 }
 
-impl PartialOrd for ScoredDoc<'_> {
+impl PartialOrd for ScoredDoc {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.score.partial_cmp(&other.score)
     }
 }
 
-impl PartialEq for ScoredDoc<'_> {
+impl PartialEq for ScoredDoc {
     fn eq(&self, other: &Self) -> bool {
         self.score == other.score
     }
 }
 
-impl Eq for ScoredDoc<'_> {}
+impl Eq for ScoredDoc {}
 
 #[derive(Debug)]
 pub struct Cursor<'a> {
     pub postings_list: &'a PostingsList,
     pub position: usize, // index position for the postings list
-    pub next_doc: Option<&'a usize>,
+    pub next_doc: Option<usize>,
 }
 
 impl<'a> Cursor<'a> {
