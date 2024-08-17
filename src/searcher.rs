@@ -131,6 +131,7 @@ impl<'a> Cursor<'a> {
             self.next_doc = Some(next_doc);
             true
         } else {
+            self.next_doc = None;
             false
         }
     }
