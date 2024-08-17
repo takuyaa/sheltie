@@ -101,8 +101,8 @@ impl PostingsList {
         self.freqs.push(freq);
     }
 
-    pub fn get_doc_id(&self, index: usize) -> Option<&usize> {
-        self.docs.get(index)
+    pub fn get_doc_id(&self, index: usize) -> Option<usize> {
+        self.docs.get(index).map(|doc_id| *doc_id)
     }
 }
 
