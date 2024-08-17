@@ -108,17 +108,17 @@ impl PartialEq for ScoredDoc<'_> {
 impl Eq for ScoredDoc<'_> {}
 
 #[derive(Debug)]
-struct Cursor<'a> {
-    postings_list: &'a PostingsList,
-    position: usize, // index position for the postings list
-    next_doc: Option<&'a usize>,
+pub struct Cursor<'a> {
+    pub postings_list: &'a PostingsList,
+    pub position: usize, // index position for the postings list
+    pub next_doc: Option<&'a usize>,
 }
 
 impl<'a> Cursor<'a> {
     pub fn new(postings_list: &'a PostingsList) -> Option<Self> {
         let head = 0;
         postings_list.get_doc_id(head).map(|doc_id| Cursor {
-            postings_list: postings_list,
+            postings_list,
             position: 0,
             next_doc: Some(doc_id),
         })
