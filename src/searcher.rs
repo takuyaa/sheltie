@@ -76,13 +76,13 @@ impl<'a> Searcher<'a> {
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct SearchResult {
-    doc_id: usize,
-    score: f64,
+    pub doc_id: usize,
+    pub score: f64,
 }
 
-struct ScoredDoc<'a> {
-    doc_id: &'a usize,
-    score: f64,
+pub struct ScoredDoc<'a> {
+    pub doc_id: &'a usize,
+    pub score: f64,
 }
 
 impl Ord for ScoredDoc<'_> {
